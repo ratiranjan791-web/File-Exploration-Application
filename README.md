@@ -1,5 +1,6 @@
 # File-Exploration-Application
 Wipro Capstone Project
+
 Objective: Develop a console-
 based file explorer application in C++
 that interfaces with the Linux operating
