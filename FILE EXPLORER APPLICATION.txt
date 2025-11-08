@@ -1,0 +1,133 @@
+FILE EXPLORER APPLICATION
+consisting all codes of day 1,2,3,4,5 in one main file...
+
+CODE-
+
+
+#include <iostream>
+#include <filesystem>
+#include <string>
+#include <sstream>
+#include <fstream>
+#include <cstdio>   // for remove(), rename()
+using namespace std;
+namespace fs = std::filesystem;
+
+void listFiles(const string &path = ".") {
+    try {
+        for (const auto &entry : fs::directory_iterator(path))
+            cout << entry.path().filename().string() << "  ";
+        cout << endl;
+    } catch (const fs::filesystem_error &e) {
+        cerr << "Error: " << e.what() << endl;
+    }
+}
+
+void copyFile(const string &src, const string &dst) {
+    try {
+        ifstream in(src, ios::binary);
+        ofstream out(dst, ios::binary);
+        if (!in) throw runtime_error("Source file not found.");
+        if (!out) throw runtime_error("Failed to create destination file.");
+        out << in.rdbuf();
+        cout << "File copied successfully.\n";
+    } catch (const exception &e) {
+        cerr << "Error: " << e.what() << endl;
+    }
+}
+
+void searchFile(const string &dirpath, const string &pattern) {
+    try {
+        for (const auto &entry : fs::recursive_directory_iterator(dirpath)) {
+            if (entry.path().filename().string().find(pattern) != string::npos)
+                cout << entry.path() << endl;
+        }
+    } catch (const fs::filesystem_error &e) {
+        cerr << "Error: " << e.what() << endl;
+    }
+}
+
+int main() {
+    cout << "==== Simple File Explorer (Windows C++) ====\n";
+    string cmd;
+
+    while (true) {
+        cout << "explorer> ";
+        getline(cin, cmd);
+        if (cmd.empty()) continue;
+
+        if (cmd == "ls") {
+            listFiles(".");
+        } 
+        else if (cmd == "pwd") {
+            cout << fs::current_path().string() << endl;
+        } 
+        else if (cmd.rfind("cd ", 0) == 0) {
+            string dir = cmd.substr(3);
+            try {
+                fs::current_path(dir);
+                cout << "Changed directory to: " << fs::current_path().string() << endl;
+            } catch (const exception &e) {
+                cerr << "Error: " << e.what() << endl;
+            }
+        } 
+        else if (cmd.rfind("cp ", 0) == 0) {
+            string src, dst;
+            stringstream ss(cmd.substr(3));
+            ss >> src >> dst;
+            if (!src.empty() && !dst.empty())
+                copyFile(src, dst);
+            else
+                cout << "Usage: cp <src> <dest>\n";
+        } 
+        else if (cmd.rfind("rm ", 0) == 0) {
+            string file = cmd.substr(3);
+            if (remove(file.c_str()) == 0)
+                cout << "File deleted successfully.\n";
+            else
+                perror("rm");
+        } 
+        else if (cmd.rfind("mv ", 0) == 0) {
+            string src, dst;
+            stringstream ss(cmd.substr(3));
+            ss >> src >> dst;
+            if (rename(src.c_str(), dst.c_str()) == 0)
+                cout << "File moved/renamed successfully.\n";
+            else
+                perror("mv");
+        } 
+        else if (cmd.rfind("touch ", 0) == 0) {
+            string file = cmd.substr(6);
+            ofstream outfile(file);
+            if (outfile)
+                cout << "File created: " << file << endl;
+            else
+                cerr << "Error creating file.\n";
+        } 
+        else if (cmd.rfind("search ", 0) == 0) {
+            string pattern = cmd.substr(7);
+            searchFile(".", pattern);
+        } 
+        else if (cmd == "help") {
+            cout << "Available commands:\n";
+            cout << "ls                 - List files\n";
+            cout << "cd <dir>           - Change directory\n";
+            cout << "pwd                - Print current directory\n";
+            cout << "cp <src> <dest>    - Copy file\n";
+            cout << "mv <src> <dest>    - Move/Rename file\n";
+            cout << "rm <file>          - Delete file\n";
+            cout << "touch <file>       - Create new file\n";
+            cout << "search <name>      - Search file by name\n";
+            cout << "exit               - Quit explorer\n";
+        } 
+        else if (cmd == "exit") {
+            cout << "Exiting File Explorer.\n";
+            break;
+        } 
+        else {
+            cout << "Unknown command. Type 'help' for list.\n";
+        }
+    }
+
+    return 0;
+}
